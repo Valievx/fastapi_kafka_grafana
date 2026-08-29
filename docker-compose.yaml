@@ -2,7 +2,7 @@ services:
   web-app:
     build:
       dockerfile: Dockerfile
-    container_name: web-app
+    container_name: web-game-service
     ports:
       - "${PORT}:8000"
     command: uvicorn --factory main:create_app --reload --host 0.0.0.0 --port 8000
@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./app:/app/
+      - ./game-service:/game-service/
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
@@ -37,6 +37,9 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+    volumes:
+      - kafka-data:/tmp/kraft-combined-logs
 
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:29092", "--list"]
@@ -71,3 +74,4 @@ services:
 
 volumes:
   grafana-data:
+  kafka-data:
