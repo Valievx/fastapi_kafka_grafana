@@ -1,16 +1,45 @@
 services:
-  web-app:
+  web:
     build:
       dockerfile: Dockerfile
-    container_name: web-game-service
+    container_name: web
     ports:
       - "${PORT}:8000"
     command: uvicorn --factory main:create_app --reload --host 0.0.0.0 --port 8000
     restart: always
     env_file:
       - .env
+    depends_on:
+      clickhouse:
+        condition: service_healthy
     volumes:
       - ./game-service:/game-service/
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.6-alpine
+    container_name: clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"   # HTTP интерфейс
+      - "9000:9000"   # Нативный TCP (для клиентов)
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - clickhouse-logs:/var/log/clickhouse-server
+      - ./clickhouse-config:/etc/clickhouse-server/config.d  # Для кастомных конфигов
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      CLICKHOUSE_WEB_ENABLED: "true"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8123/ping | grep -q Ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
@@ -75,3 +104,5 @@ services:
 volumes:
   grafana-data:
   kafka-data:
+  clickhouse-data:
+  clickhouse-logs:
