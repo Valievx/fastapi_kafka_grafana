@@ -2,6 +2,19 @@
 Swagger = http://127.0.0.1:8000/api/docs
 Kafka = http://127.0.0.1:8090
 Gragana = http://127.0.0.1:3000
+
+
+Создание таблицы:
+docker exec -i clickhouse clickhouse-client --database analytics < clickhouse/init.sql
+
+Зайти в ClickHouse:
+docker exec -it clickhouse clickhouse-client
+
+Посмотреть таблицы:
+SHOW TABLES;
+
+Проверить количество записей:
+docker exec clickhouse clickhouse-client --query "SELECT count() FROM analytics.game_events"
 ```
 
 
@@ -16,10 +29,6 @@ Game_event: id_event: UUID, event_type: LowCardinality(T), time: DateTime64, tex
 
 Сделать метод который будет отпарвлять событие в Kafka -> consumer (будет считать время и доступен по веб-интерфейсу) -
 > handler -> clickhouse
-
-
-1. Клиент для работы с ClickHouse
-2. Handler который будет писать сообщения в  Clickhouse
 
 
 сделать партиций столько сколько consumer

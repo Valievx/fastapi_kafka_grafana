@@ -17,7 +17,7 @@ class GameEventRepository:
                 event.text,
             ]],
             column_names=[
-                "id_event",
+                "event_id",
                 "event_type",
                 "time",
                 "text",

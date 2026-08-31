@@ -9,5 +9,4 @@ class GameEventHandler:
 
     async def handle(self, event: dict):
         event = EventSchema.model_validate(event)
-
         await self.repository.save(event)

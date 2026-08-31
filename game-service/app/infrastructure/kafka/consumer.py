@@ -33,4 +33,4 @@ class KafkaConsumer:
 
     async def _consume(self):
         async for message in self.consumer:
-            await self.handler(message)
+            await self.handler(message.value)
