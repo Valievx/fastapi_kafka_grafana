@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -5,18 +6,20 @@ from fastapi import FastAPI
 from api.v1 import router
 from infrastructure.kafka.producer import kafka_producer
 from infrastructure.clickhouse.client import clickhouse_client
-from lifespan import game_consumer
+from lifespan import game_consumers
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await kafka_producer.start()
     await clickhouse_client.connect()
-    await game_consumer.start()
+
+    await asyncio.gather(*(consumer.start() for consumer in game_consumers))
 
     yield
 
-    await game_consumer.stop()
+    await asyncio.gather(*(consumer.stop() for consumer in game_consumers))
+
     await clickhouse_client.close()
     await kafka_producer.stop()
 
