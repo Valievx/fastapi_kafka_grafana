@@ -50,4 +50,3 @@ Game_event: id_event: UUID, event_type: LowCardinality(T), time: DateTime64, tex
 как почистить место на диске (volume)
 как понять что все consumer успевают за producer
 ```
-

@@ -1,10 +1,11 @@
 services:
-  web:
+  game-service:
     build:
+      context: ./game-service
       dockerfile: Dockerfile
-    container_name: web
+    container_name: game-service
     ports:
-      - "${PORT}:8000"
+      - "${GAME_SERVICE_PORT}:8000"
     command: uvicorn --factory main:create_app --reload --host 0.0.0.0 --port 8000
     restart: unless-stopped
     env_file:
@@ -13,7 +14,24 @@ services:
       clickhouse:
         condition: service_healthy
     volumes:
-      - ./game-service:/game-service/
+      - ./game-service/app:/app
+
+  horoscope-service:
+    build:
+      context: ./horoscope-service
+      dockerfile: Dockerfile
+    container_name: horoscope-service
+    ports:
+      - "${HOROSCOPE_SERVICE_PORT}:8000"
+    command: uvicorn --factory main:create_app --reload --host 0.0.0.0 --port 8000
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    volumes:
+      - ./horoscope-service/app:/app
 
   clickhouse:
     image: clickhouse/clickhouse-server:24.6-alpine
@@ -34,6 +52,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: horoscope-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
@@ -102,3 +129,4 @@ volumes:
   kafka-data:
   clickhouse-data:
   clickhouse-logs:
+  redis-data:
