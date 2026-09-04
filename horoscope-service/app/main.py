@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from infrastructure.redis.client import redis_client
 from infrastructure.kafka.producer import kafka_producer
 from lifespan import horoscope_consumer
-from api.v1 import router
 
 from fastapi import FastAPI
 
@@ -26,5 +25,5 @@ def create_app() -> FastAPI:
         docs_url="/api/docs",
         lifespan=lifespan
     )
-    app.include_router(router.router)
+    app.include_router(router)
     return app
