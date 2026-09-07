@@ -18,13 +18,7 @@ docker exec clickhouse clickhouse-client --query "SELECT count() FROM analytics.
 ```
 
 
-
-
 ```commandline
-Сделать mock отправки 1000000 событий 
-Добавиьт batch в consumer
-
-
 ```
 1. В consumer добавлен batch:
 ```python
