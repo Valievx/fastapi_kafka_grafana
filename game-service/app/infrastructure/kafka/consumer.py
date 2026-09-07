@@ -30,6 +30,8 @@ class KafkaConsumer:
         self.handler = handler
         self.task = None
 
+        self.batch_size = 1000
+
         self.processed_messages = 0
         self.total_time = 0.0
         self.last_time = 0.0
@@ -53,20 +55,30 @@ class KafkaConsumer:
         await self.consumer.stop()
 
     async def _consume(self):
+        batch = []
+
         async for message in self.consumer:
-            started = time.perf_counter()
+            batch.append(message.value)
 
-            try:
-                await self.handler(message.value)
+            if len(batch) >= self.batch_size:
+                await self._process(batch)
+                batch = []
 
-                elapsed = time.perf_counter() - started
-                self.processed_messages += 1
-                self.total_time += elapsed
-                self.last_time = elapsed
-                self.max_time = max(self.max_time, elapsed)
+    async def _process(self, batch: list[dict]):
+        started = time.perf_counter()
 
-            except Exception as e:
-                logger.error(f"Consumer {self.consumer_id} failed: {type(e).__name__}: {e}")
+        try:
+            await self.handler(batch)
+
+            elapsed = time.perf_counter() - started
+
+            self.processed_messages += len(batch)
+            self.total_time += elapsed
+            self.last_time = elapsed
+            self.max_time = max(self.max_time, elapsed)
+
+        except Exception as e:
+            logger.error(f"Consumer {self.consumer_id} failed: {type(e).__name__}: {e}")
 
     async def get_metrics(self) -> dict:
         avg = self.total_time / self.processed_messages if self.processed_messages else 0

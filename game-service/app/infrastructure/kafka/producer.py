@@ -16,7 +16,7 @@ class KafkaProducer:
         await self.producer.stop()
 
     async def send(self, event: EventSchema, topic: str):
-        await self.producer.send_and_wait(
+        await self.producer.send(
             topic=topic,
             value=event.model_dump_json().encode("utf-8")
         )

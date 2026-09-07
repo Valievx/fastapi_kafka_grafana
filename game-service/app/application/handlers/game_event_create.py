@@ -7,6 +7,6 @@ class GameEventHandler:
     def __init__(self, repository: GameEventRepository):
         self.repository = repository
 
-    async def handle(self, event: dict):
-        event = EventSchema.model_validate(event)
-        await self.repository.save(event)
+    async def handle(self, events: list[dict]):
+        events = [EventSchema.model_validate(event) for event in events]
+        await self.repository.save(events)

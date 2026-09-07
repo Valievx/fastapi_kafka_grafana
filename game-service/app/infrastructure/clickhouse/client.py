@@ -9,7 +9,7 @@ class ClickHouseClient:
         self.client = None
 
     async def connect(self):
-        self.client = clickhouse_connect.get_client(
+        self.client = await clickhouse_connect.get_async_client(
             host=settings.CLICKHOUSE_HOST,
             port=settings.CLICKHOUSE_PORT,
             username=settings.CLICKHOUSE_USER,
