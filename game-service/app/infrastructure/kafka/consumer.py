@@ -25,7 +25,7 @@ class KafkaConsumer:
             group_id=group_id,
             value_deserializer=lambda v: json.loads(v.decode()),
             auto_offset_reset='earliest',  # Читать с начала, если нет сохраненного оффсета
-            enable_auto_commit=True,
+            enable_auto_commit=False,
         )
         self.handler = handler
         self.task = None
@@ -36,9 +36,11 @@ class KafkaConsumer:
         self.total_time = 0.0
         self.last_time = 0.0
         self.max_time = 0.0
+        self.start_time = None
 
     async def start(self):
         await self.consumer.start()
+        self.start_time = time.perf_counter()
         self.task = asyncio.create_task(self._consume())
 
     async def stop(self):
@@ -55,38 +57,40 @@ class KafkaConsumer:
         await self.consumer.stop()
 
     async def _consume(self):
-        batch = []
+        while True:
+            result = await self.consumer.getmany(timeout_ms=100, max_records=self.batch_size)
 
-        async for message in self.consumer:
-            batch.append(message.value)
+            for topic_partition, messages in result.items():
+                if not messages:
+                    continue
 
-            if len(batch) >= self.batch_size:
+                batch = [message.value for message in messages]
                 await self._process(batch)
-                batch = []
 
     async def _process(self, batch: list[dict]):
         started = time.perf_counter()
 
         try:
             await self.handler(batch)
+            await self.consumer.commit()
 
             elapsed = time.perf_counter() - started
-
             self.processed_messages += len(batch)
             self.total_time += elapsed
             self.last_time = elapsed
             self.max_time = max(self.max_time, elapsed)
-
         except Exception as e:
             logger.error(f"Consumer {self.consumer_id} failed: {type(e).__name__}: {e}")
 
     async def get_metrics(self) -> dict:
-        avg = self.total_time / self.processed_messages if self.processed_messages else 0
+        wall_elapsed = time.perf_counter() - self.start_time if self.start_time else 0
+        rps = self.processed_messages / wall_elapsed if wall_elapsed else 0
 
         return {
             "consumer_id": self.consumer_id,
             "processed": self.processed_messages,
-            "avg_time_ms": round(avg * 1000, 2),
-            "last_time_ms": round(self.last_time * 1000, 2),
-            "max_time_ms": round(self.max_time * 1000, 2),
+            "rps": round(rps, 2),                       # теперь wall-clock
+            "last_batch_time_ms": round(self.last_time * 1000, 2),
+            "max_batch_time_ms": round(self.max_time * 1000, 2),
+            "elapsed_s": round(wall_elapsed, 2),
         }
