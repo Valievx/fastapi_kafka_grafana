@@ -32,10 +32,8 @@ class KafkaConsumer:
 
         self.batch_size = 1000
 
+        # metrics
         self.processed_messages = 0
-        self.total_time = 0.0
-        self.last_time = 0.0
-        self.max_time = 0.0
         self.start_time = None
 
     async def start(self):
@@ -68,29 +66,21 @@ class KafkaConsumer:
                 await self._process(batch)
 
     async def _process(self, batch: list[dict]):
-        started = time.perf_counter()
-
         try:
             await self.handler(batch)
             await self.consumer.commit()
 
-            elapsed = time.perf_counter() - started
             self.processed_messages += len(batch)
-            self.total_time += elapsed
-            self.last_time = elapsed
-            self.max_time = max(self.max_time, elapsed)
         except Exception as e:
             logger.error(f"Consumer {self.consumer_id} failed: {type(e).__name__}: {e}")
 
     async def get_metrics(self) -> dict:
-        wall_elapsed = time.perf_counter() - self.start_time if self.start_time else 0
-        rps = self.processed_messages / wall_elapsed if wall_elapsed else 0
+        elapsed = time.perf_counter() - self.start_time if self.start_time else 0
+        rps = self.processed_messages / elapsed if elapsed else 0
 
         return {
             "consumer_id": self.consumer_id,
             "processed": self.processed_messages,
-            "rps": round(rps, 2),                       # теперь wall-clock
-            "last_batch_time_ms": round(self.last_time * 1000, 2),
-            "max_batch_time_ms": round(self.max_time * 1000, 2),
-            "elapsed_s": round(wall_elapsed, 2),
+            "rps": round(rps, 2),
+            "elapsed_s": round(elapsed, 2),
         }
