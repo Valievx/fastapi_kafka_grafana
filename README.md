@@ -102,7 +102,7 @@ clickhouse_client = ClickHouseClient()
 ```
 
 
-1. Метрику переделать чтобы consumer считал RPS и producer
+1. Метрику переделать чтобы consumer считал RPS и producer RPS
 2. Настроить grafana чтобы получать RPS consumer и RPS producer
 3. Найти в clickhosue системные таблицы, успевает он индексировать или нет
 4. Курс Clickhouse (Суммирование на лету через SummingMergeTree)
