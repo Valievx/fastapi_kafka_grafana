@@ -9,12 +9,13 @@ router = APIRouter(prefix="/api/v1")
 
 
 @router.post(path="/send-event")
-async def send_event(data: EventSchema):
-    await kafka_producer.send(event=data, topic="game-events")
-    return JSONResponse(
-        content={"event_id": str(data.event_id)},
-        status_code=200
-    )
+async def send_event():
+    # 2h 38min 5.04s
+    for _ in range(1000000):
+        event = EventSchema(event_type="game-event", text="test event")
+        await kafka_producer.send(event=event, topic="game-events")
+
+    return JSONResponse(content={"success": True}, status_code=200)
 
 
 @router.get(path="/metrics")
