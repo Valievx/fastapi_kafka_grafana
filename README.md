@@ -15,11 +15,25 @@ SHOW TABLES;
 
 Проверить количество записей:
 docker exec clickhouse clickhouse-client --query "SELECT count() FROM analytics.game_events"
+
+
+```
+найти партиции ClickHouse, в которых сейчас находится больше всего активных parts
+```sql
+SELECT
+    database,
+    table,
+    partition_id,
+    count() AS active_parts
+FROM system.parts
+WHERE active = 1
+GROUP BY database, table, partition_id
+ORDER BY active_parts DESC
+LIMIT 10;
 ```
 
 
-```commandline
-```
+
 1. В consumer добавлен batch:
 ```python
 class KafkaConsumer:
@@ -99,11 +113,4 @@ clickhouse_client = ClickHouseClient()
 
 Первый результат обработки 1000000: 2h 38min 5.04s
 Результат после рефакторинга: 14.24s
-```
-
-
-1. Настроить grafana чтобы получать RPS consumer и RPS producer
-2. Найти в clickhosue системные таблицы, успевает он индексировать или нет
-3. Курс Clickhouse (Суммирование на лету через SummingMergeTree)4
-4. Самопрезентация
 ```
