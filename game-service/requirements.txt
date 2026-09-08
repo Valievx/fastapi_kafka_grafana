@@ -19,6 +19,7 @@ lz4==4.4.5
 multidict==6.7.1
 packaging==26.3
 propcache==0.5.2
+prometheus-client==0.21.1
 pydantic==2.13.4
 pydantic-settings==2.15.0
 pydantic_core==2.46.4

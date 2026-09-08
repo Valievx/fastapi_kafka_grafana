@@ -3,6 +3,7 @@ import time
 from aiokafka import AIOKafkaProducer
 
 from common.settings import settings
+from common.metrics import kafka_messages_sent_total
 from schemas.event import EventSchema
 
 
@@ -29,6 +30,7 @@ class KafkaProducer:
             value=event.model_dump_json().encode("utf-8")
         )
         self.sent_messages += 1
+        kafka_messages_sent_total.labels(topic=topic).inc()
 
 
     async def get_metrics(self) -> dict:

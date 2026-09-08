@@ -7,6 +7,7 @@ import json
 from aiokafka import AIOKafkaConsumer
 
 from common.settings import settings
+from common.metrics import kafka_messages_processed_total
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -18,6 +19,7 @@ class KafkaConsumer:
 
     def __init__(self, topic: str, consumer_id: int, group_id: str, handler: Callable):
         self.consumer_id = consumer_id
+        self.topic = topic
 
         self.consumer = AIOKafkaConsumer(
             topic,
@@ -71,6 +73,9 @@ class KafkaConsumer:
             await self.consumer.commit()
 
             self.processed_messages += len(batch)
+            kafka_messages_processed_total.labels(
+                topic=self.topic, consumer_id=str(self.consumer_id)
+            ).inc(len(batch))
         except Exception as e:
             logger.error(f"Consumer {self.consumer_id} failed: {type(e).__name__}: {e}")
 

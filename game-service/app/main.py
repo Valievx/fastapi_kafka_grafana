@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from prometheus_client import make_asgi_app
 
 from api.v1 import router
 from infrastructure.kafka.producer import kafka_producer
@@ -31,4 +32,5 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     app.include_router(router.router)
+    app.mount("/metrics", make_asgi_app())
     return app

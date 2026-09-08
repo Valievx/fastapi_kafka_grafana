@@ -19,7 +19,12 @@ async def send_event():
 
 @router.get(path="/metrics")
 async def get_metrics():
+    producer_metrics = await kafka_producer.get_metrics()
+    consumers_metrics = [await consumer.get_metrics() for consumer in game_consumers]
+
     return {
-        "producer": await kafka_producer.get_metrics(),
-        "consumers": [await consumer.get_metrics() for consumer in game_consumers],
+        "producer_rps": producer_metrics["rps"],
+        "consumer_rps": round(sum(consumer["rps"] for consumer in consumers_metrics), 2),
+        "producer": producer_metrics,
+        "consumers": consumers_metrics,
     }
